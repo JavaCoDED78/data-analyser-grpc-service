@@ -1,0 +1,74 @@
+version: '3.0'
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
+  redis-data:
+    driver: local
+
+services:
+  generator:
+    image: 'androsor/data-generator-grpc-service:latest'
+    networks:
+      - app
+    depends_on:
+      - analyser
+    environment:
+      - GRPC_HOST=analyser:${GRPC_PORT}
+      - BATCH_SIZE=${GENERATOR_BATCH_SIZE}
+    ports:
+      - '8081:8081'
+
+  analyser:
+    image: 'androsor/data-analyser-grpc-service:latest'
+    networks:
+      - app
+    depends_on:
+      - postgres
+    environment:
+      - GRPC_PORT=${GRPC_PORT}
+      - HOST=${HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USERNAME=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - '8082:8082'
+
+  store:
+    image: 'androsor/data-store-grpc-service:latest'
+    networks:
+      - app
+    depends_on:
+      - postgres
+    environment:
+      - GRPC_HOST=analyser:${GRPC_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - BATCH_SIZE=${STORE_BATCH_SIZE}
+    ports:
+      - '8082:8082'
+
+  postgres:
+    image: 'postgres:15.1-alpine'
+    networks:
+      - app
+    env_file:
+      - .env
+    ports:
+      - '5437:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.2-rc-alpine
+    networks:
+      - app
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis-data:/data
