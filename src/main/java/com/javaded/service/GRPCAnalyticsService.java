@@ -24,23 +24,23 @@ public class GRPCAnalyticsService extends AnalyticsServerGrpc.AnalyticsServerImp
     @Override
     public void askForData(GRPCAnalyticsRequest request, StreamObserver<GRPCData> responseObserver) {
         List<Data> data = dataService.getWithBatch(request.getBatchSize());
-        for (Data d : data) {
+        data.forEach(elem -> {
             GRPCData dataRequest = GRPCData.newBuilder()
-                    .setSensorId(d.getSensorId())
+                    .setSensorId(elem.getSensorId())
                     .setTimestamp(
                             Timestamp.newBuilder()
                                     .setSeconds(
-                                            d.getTimestamp()
+                                            elem.getTimestamp()
                                                     .toEpochSecond(ZoneOffset.UTC)
                                     )
                                     .build())
                     .setMeasurementType(
-                            MeasurementType.valueOf(d.getMeasurementType().name())
+                            MeasurementType.valueOf(elem.getMeasurementType().name())
                     )
-                    .setMeasurement(d.getMeasurement())
+                    .setMeasurement(elem.getMeasurement())
                     .build();
             responseObserver.onNext(dataRequest);
-        }
+        });
         log.info("Batch was sent.");
         responseObserver.onCompleted();
     }
