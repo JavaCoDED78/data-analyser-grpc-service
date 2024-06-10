@@ -12,7 +12,7 @@ volumes:
 
 services:
   generator:
-    image: 'androsor/data-generator-grpc-service:latest'
+    image: 'androsor/data-producer-grpc-service:latest'
     networks:
       - app
     depends_on:
