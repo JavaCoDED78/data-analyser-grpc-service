@@ -50,7 +50,7 @@ services:
       - REDIS_PORT=${REDIS_PORT}
       - BATCH_SIZE=${STORE_BATCH_SIZE}
     ports:
-      - '8082:8082'
+      - '8083:8083'
 
   postgres:
     image: 'postgres:15.1-alpine'
